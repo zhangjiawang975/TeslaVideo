@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; media-src file:; img-src 'self' file: data:">
+  <title>TeslaVideo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <aside id="sidebar">
+    <header class="brand">
+      <div class="logo">TeslaVideo</div>
+      <button id="openBtn" class="icon-btn" title="打开文件夹">
+        <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      </button>
+    </header>
+    <div id="rootPath" class="root"></div>
+    <nav id="tabs" class="segmented">
+      <button data-kind="all">全部<span></span></button>
+      <button data-kind="sentry">哨兵<span></span></button>
+      <button data-kind="saved">保存<span></span></button>
+      <button data-kind="recent">最近<span></span></button>
+    </nav>
+    <div id="eventList"></div>
+    <div id="emptyHint" hidden></div>
+  </aside>
+
+  <main>
+    <section id="stage">
+      <div id="videos"></div>
+      <div id="placeholder">插入特斯拉 U 盘，或点击左侧的文件夹按钮打开 TeslaCam 目录</div>
+      <div id="toast" hidden>
+        <span id="toastText"></span>
+        <button id="toastAction" class="btn"></button>
+        <button id="toastClose" class="icon-btn" title="关闭"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+      <div id="topbar">
+        <div id="overlay" class="pill" hidden><span id="overlayCam"></span><span id="overlayTime"></span></div>
+        <div id="hud" class="pill" hidden>
+          <div class="seg">
+            <svg id="hudLeft" class="blinker" viewBox="0 0 24 24"><path d="M10 4 2 12l8 8v-5h11V9H10z"/></svg>
+            <div class="speed"><b id="hudSpeed">0</b><span>km/h</span></div>
+            <svg id="hudRight" class="blinker" viewBox="0 0 24 24"><path d="M14 4l8 8-8 8v-5H3V9h11z"/></svg>
+          </div>
+          <i class="sep"></i>
+          <div class="gears seg"><span data-gear="0">P</span><span data-gear="2">R</span><span data-gear="3">N</span><span data-gear="1">D</span></div>
+          <i class="sep"></i>
+          <div class="seg pedal" title="加速踏板">
+            <svg class="pedal-icon" viewBox="0 0 24 24"><g transform="rotate(-16 12 11)"><rect x="7" y="2" width="10" height="16" rx="2.5"/><path d="M9.8 6.5h4.4M9.8 9.5h4.4M9.8 12.5h4.4"/></g><path d="M7 21.5h10"/></svg>
+            <div class="meter"><div id="hudPedalBar"></div></div>
+            <b id="hudPedal">0%</b>
+          </div>
+          <i class="sep"></i>
+          <svg id="hudBrake" class="brake" viewBox="0 0 32 24">
+            <circle cx="16" cy="12" r="7.5"/>
+            <path d="M6.5 4.5a11 11 0 0 0 0 15M25.5 4.5a11 11 0 0 1 0 15"/>
+            <path d="M16 7.5v5.5M16 15.6v.9"/>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <section id="dock">
+      <div class="row">
+        <button id="playBtn" class="play" title="播放/暂停 (空格)">
+          <svg class="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg>
+          <svg class="i-pause" viewBox="0 0 24 24"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>
+        </button>
+        <div class="times">
+          <span id="clockText" class="clock"></span>
+          <span id="timeText" class="mono muted">00:00 / 00:00</span>
+        </div>
+        <span class="spacer"></span>
+        <label class="switch"><input type="checkbox" id="hudChk" checked><i></i>车辆数据</label>
+        <select id="rateSel" title="播放速度">
+          <option value="0.5">0.5×</option>
+          <option value="1" selected>1×</option>
+          <option value="2">2×</option>
+          <option value="4">4×</option>
+          <option value="8">8×</option>
+        </select>
+      </div>
+
+      <div id="timeline">
+        <div id="track">
+          <div id="ticks"></div>
+          <div id="dimL" class="dim"></div>
+          <div id="dimR" class="dim"></div>
+          <div id="range"></div>
+          <div id="eventMark" hidden></div>
+          <div id="handleL" class="handle" title="拖动设置起点"></div>
+          <div id="handleR" class="handle" title="拖动设置终点"></div>
+          <div id="playhead"></div>
+        </div>
+      </div>
+
+      <div class="row trim">
+        <button id="setInBtn" class="btn" title="快捷键 I">设为起点</button>
+        <div class="stat"><small>起点</small><b id="inText">--</b></div>
+        <div class="stat"><small>终点</small><b id="outText">--</b></div>
+        <div class="stat"><small>时长</small><b id="durText">--</b></div>
+        <button id="setOutBtn" class="btn" title="快捷键 O">设为终点</button>
+        <button id="resetBtn" class="btn ghost">重置</button>
+        <span class="spacer"></span>
+        <select id="modeSel" title="导出方式">
+          <option value="watermark" title="烧录时间水印，高画质重新编码">带时间水印</option>
+          <option value="copy" title="直接复制原始画面数据，与行车记录仪原文件逐帧一致">原画无损</option>
+        </select>
+        <button id="outDirBtn" class="btn ghost path" title="导出目录">未设置导出目录</button>
+        <button id="exportBtn" class="btn primary" disabled><span>导出 MP4</span></button>
+      </div>
+    </section>
+  </main>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

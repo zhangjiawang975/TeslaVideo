@@ -1,0 +1,38 @@
+{
+  "name": "tesla-video",
+  "productName": "TeslaVideo",
+  "version": "1.0.0",
+  "description": "特斯拉行车记录仪视频播放与剪辑导出工具",
+  "main": "src/main.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "fetch-ffmpeg": "node scripts/fetch-ffmpeg.js",
+    "dist": "node scripts/fetch-ffmpeg.js && electron-builder --win --x64 && node scripts/rename-dist.js"
+  },
+  "build": {
+    "appId": "com.teslavideo.app",
+    "productName": "TeslaVideo",
+    "files": [
+      "src/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "bin/ffmpeg.exe",
+        "to": "ffmpeg.exe"
+      }
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "dir"
+      ]
+    }
+  },
+  "devDependencies": {
+    "electron": "^44.9.0",
+    "electron-builder": "^26.15.3"
+  }
+}
