@@ -39,6 +39,7 @@ const el = {
   inText: $('inText'), outText: $('outText'), durText: $('durText'),
   modeSel: $('modeSel'), outDirBtn: $('outDirBtn'), exportBtn: $('exportBtn'),
   zoomBadge: $('zoomBadge'),
+  mapBox: $('mapBox'), map: $('map'), mapText: $('mapText'), mapOpen: $('mapOpen'),
   toast: $('toast'), toastText: $('toastText'), toastAction: $('toastAction'), toastClose: $('toastClose'),
   hud: $('hud'), hudChk: $('hudChk'), hudSpeed: $('hudSpeed'), hudLeft: $('hudLeft'), hudRight: $('hudRight'),
   hudBrake: $('hudBrake'), hudPedal: $('hudPedal'), hudPedalBar: $('hudPedalBar'),
@@ -279,6 +280,7 @@ function loadEvent(ev) {
   renderTicks()
   renderAll()
   el.exportBtn.disabled = false
+  renderMap(ev)
 
   // Replace provisional lengths with real ones.
   const files = state.segs.map(s => (s.files.front || Object.values(s.files)[0]).path)
@@ -362,6 +364,38 @@ function layout() {
   el.overlayCam.textContent = CAMERA_NAMES[state.cells[state.mainIdx]?.camera] || ''
   state.cells[state.mainIdx]?.node.append(el.topbar, el.zoomBadge)
   resetPictureZoom()
+}
+
+// ---------- event location map ----------
+// event.json (Saved/Sentry only) holds where the event was triggered. Tesla China already
+// writes GCJ-02, so it goes straight onto AMap tiles without conversion.
+let map = null
+let pin = null
+
+function eventLocation(ev) {
+  const lat = parseFloat(ev?.event?.est_lat)
+  const lon = parseFloat(ev?.event?.est_lon)
+  return Number.isFinite(lat) && Number.isFinite(lon) && (lat || lon) ? [lat, lon] : null
+}
+
+function renderMap(ev) {
+  const loc = eventLocation(ev)
+  el.mapBox.hidden = !loc
+  if (!loc) return
+  const name = [ev.event.city, ev.event.street].filter(Boolean).join(' · ')
+  el.mapText.textContent = name || '事件触发位置'
+  el.mapText.title = `事件触发位置（约 10 米精度）\n${loc[0]}, ${loc[1]}`
+  el.mapOpen.onclick = () => window.api.openMap(`https://uri.amap.com/marker?position=${loc[1]},${loc[0]}&name=${encodeURIComponent(name || '事件位置')}&coordinate=gaode&callnative=0&src=TeslaVideo`)
+  if (!map) {
+    map = L.map(el.map, { zoomControl: false, attributionControl: false })
+    L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', {
+      subdomains: '1234', maxZoom: 18,
+    }).addTo(map)
+    pin = L.marker(loc, { icon: L.divIcon({ className: 'map-pin', iconSize: [26, 34], iconAnchor: [13, 34] }), keyboard: false }).addTo(map)
+  }
+  pin.setLatLng(loc)
+  map.invalidateSize()
+  map.setView(loc, 16, { animate: false })
 }
 
 // ---------- picture zoom: wheel on the main video zooms, drag pans, double-click resets ----------

@@ -133,6 +133,37 @@ select { padding: 0 10px; outline: none; }
 #eventList::-webkit-scrollbar-thumb { background: #2c2e33; border-radius: 3px; }
 #emptyHint { margin: 40px 12px; text-align: center; color: var(--muted); }
 
+#mapBox { flex: none; margin: 0 -2px 14px; }
+#map {
+  height: 190px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--panel-2);
+}
+/* Darken AMap's light tiles to match the app; the pin sits in another pane and keeps its colour. */
+#map .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.85); }
+.map-pin::before {
+  content: "";
+  position: absolute; left: 2px; top: 0;
+  width: 22px; height: 22px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: #e8453c;
+  border: 2px solid #fff;
+  box-sizing: border-box;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+.map-pin::after {
+  content: "";
+  position: absolute; left: 10px; top: 8px;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #fff;
+}
+.map-foot { display: flex; align-items: center; gap: 8px; margin-top: 6px; padding: 0 2px; }
+#mapText { flex: 1; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#mapOpen { flex: none; height: 26px; padding: 0 10px; font-size: 12px; }
+
 .day {
   position: sticky; top: 0; z-index: 1;
   padding: 12px 6px 6px;

@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('api', {
   telemetry: file => ipcRenderer.invoke('telemetry', file),
   cancelExport: () => ipcRenderer.invoke('cancel-export'),
   showItem: p => ipcRenderer.invoke('show-item', p),
+  openMap: url => ipcRenderer.invoke('open-map', url),
   pathForFile: file => webUtils.getPathForFile(file),
   checkUpdate: () => ipcRenderer.invoke('check-update'),
   installUpdate: info => ipcRenderer.invoke('install-update', info),

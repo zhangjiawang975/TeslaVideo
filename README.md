@@ -15,6 +15,7 @@
 - **按事件浏览**：全部 / 哨兵 / 保存 / 最近，同一事件的多个 1 分钟文件连成一条时间轴，自动定位到事件发生前 10 秒。
 - **多视角同步**：点击缩略图或按数字键切换主视角。
 - **画面放大**：在主画面上滚动滚轮放大细节（如车牌），按住鼠标拖动查看，双击还原（仅预览，不影响导出）。
+- **事件位置**：保存 / 哨兵事件在左下角地图上显示触发位置的图钉，可一键在高德地图中打开（位置来自特斯拉记录的触发点，约 10 米精度）。
 - **车辆数据**：显示车速、档位、转向灯、踏板、刹车（需较新固件；仅预览显示，不进入导出视频）。
 - **区间截取**：拖动时间轴两端手柄框选，可跨文件；滚轮缩放时间轴，双击还原。
 - **导出**：只导出当前主视角，两种方式（默认带时间水印）：
@@ -48,4 +49,4 @@ npm start       :: 开发运行
 npm run dist    :: 打包到 dist\TeslaVideo\ 和发布用的 zip（首次会自动下载 ffmpeg）
 ```
 
-基于 Electron + ffmpeg。车辆数据格式参考特斯拉官方 [teslamotors/dashcam](https://github.com/teslamotors/dashcam)，思路参考 [Mario34/tesla-camera](https://github.com/Mario34/tesla-camera)。
+基于 Electron + ffmpeg，地图使用 Leaflet 与高德地图瓦片。车辆数据格式参考特斯拉官方 [teslamotors/dashcam](https://github.com/teslamotors/dashcam)，思路参考 [Mario34/tesla-camera](https://github.com/Mario34/tesla-camera)。

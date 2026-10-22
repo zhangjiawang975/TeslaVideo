@@ -252,6 +252,7 @@ ipcMain.handle('cancel-export', () => {
   }
 })
 ipcMain.handle('show-item', (_, p) => shell.showItemInFolder(p))
+ipcMain.handle('open-map', (_, url) => { if (url.startsWith('https://uri.amap.com/')) shell.openExternal(url) })
 // Update errors are returned rather than thrown so the renderer can show them.
 ipcMain.handle('check-update', async () => {
   if (!app.isPackaged) return null
