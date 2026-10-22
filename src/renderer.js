@@ -38,6 +38,7 @@ const el = {
   setInBtn: $('setInBtn'), setOutBtn: $('setOutBtn'), resetBtn: $('resetBtn'),
   inText: $('inText'), outText: $('outText'), durText: $('durText'),
   modeSel: $('modeSel'), outDirBtn: $('outDirBtn'), exportBtn: $('exportBtn'),
+  zoomBadge: $('zoomBadge'),
   toast: $('toast'), toastText: $('toastText'), toastAction: $('toastAction'), toastClose: $('toastClose'),
   hud: $('hud'), hudChk: $('hudChk'), hudSpeed: $('hudSpeed'), hudLeft: $('hudLeft'), hudRight: $('hudRight'),
   hudBrake: $('hudBrake'), hudPedal: $('hudPedal'), hudPedalBar: $('hudPedalBar'),
@@ -359,8 +360,91 @@ function layout() {
     c.node.style.gridRow = isMain ? `1 / span ${Math.max(thumbs, 1)}` : ''
   })
   el.overlayCam.textContent = CAMERA_NAMES[state.cells[state.mainIdx]?.camera] || ''
-  state.cells[state.mainIdx]?.node.append(el.topbar)
+  state.cells[state.mainIdx]?.node.append(el.topbar, el.zoomBadge)
+  resetPictureZoom()
 }
+
+// ---------- picture zoom: wheel on the main video zooms, drag pans, double-click resets ----------
+const pz = { s: 1, x: 0, y: 0 } // scale and translation (px) of the main video element
+
+// Keep the (letterboxed) picture covering the cell, or centred when it is smaller than the cell.
+function clampPictureZoom(v) {
+  const w = v.clientWidth
+  const h = v.clientHeight
+  const ar = v.videoWidth && v.videoHeight ? v.videoWidth / v.videoHeight : w / h
+  const cw = Math.min(w, h * ar)
+  const ch = Math.min(h, w / ar)
+  const fit = (t, size, content) => {
+    const off = (size - content) / 2
+    if (pz.s * content <= size) return (size - pz.s * content) / 2 - pz.s * off
+    return Math.min(-pz.s * off, Math.max(size - pz.s * (off + content), t))
+  }
+  pz.x = fit(pz.x, w, cw)
+  pz.y = fit(pz.y, h, ch)
+}
+
+function applyPictureZoom() {
+  const main = state.cells[state.mainIdx]
+  for (const c of state.cells) {
+    if (c !== main) c.video.style.transform = ''
+  }
+  if (!main) return
+  if (pz.s > 1) clampPictureZoom(main.video)
+  main.video.style.transform = pz.s > 1 ? `translate(${pz.x}px, ${pz.y}px) scale(${pz.s})` : ''
+  main.node.classList.toggle('zoomed', pz.s > 1)
+  el.zoomBadge.hidden = pz.s <= 1
+  el.zoomBadge.textContent = `${Math.round(pz.s * 100)}%  ·  双击还原`
+}
+
+function resetPictureZoom() {
+  pz.s = 1
+  pz.x = 0
+  pz.y = 0
+  for (const c of state.cells) c.node.classList.remove('zoomed')
+  applyPictureZoom()
+}
+
+const mainCellOf = target => state.cells[state.mainIdx]?.node.contains(target) && !el.topbar.contains(target)
+
+el.videos.addEventListener('wheel', (e) => {
+  if (!mainCellOf(e.target)) return
+  e.preventDefault()
+  const r = state.cells[state.mainIdx].video.getBoundingClientRect()
+  const ns = Math.min(8, Math.max(1, pz.s * (e.deltaY > 0 ? 1 / 1.2 : 1.2)))
+  // Zoom around the cursor: the point under it stays put.
+  const px = e.clientX - r.left + pz.x
+  const py = e.clientY - r.top + pz.y
+  pz.x = px - (px - pz.x) * (ns / pz.s)
+  pz.y = py - (py - pz.y) * (ns / pz.s)
+  pz.s = ns
+  if (ns === 1) pz.x = pz.y = 0
+  applyPictureZoom()
+}, { passive: false })
+
+el.videos.addEventListener('pointerdown', (e) => {
+  if (pz.s <= 1 || e.button !== 0 || !mainCellOf(e.target)) return
+  const node = state.cells[state.mainIdx].node
+  node.setPointerCapture(e.pointerId)
+  node.classList.add('panning')
+  const start = { cx: e.clientX, cy: e.clientY, x: pz.x, y: pz.y }
+  const move = (ev) => {
+    pz.x = start.x + ev.clientX - start.cx
+    pz.y = start.y + ev.clientY - start.cy
+    applyPictureZoom()
+  }
+  const up = () => {
+    node.classList.remove('panning')
+    node.removeEventListener('pointermove', move)
+    node.removeEventListener('pointerup', up)
+    node.removeEventListener('pointercancel', up)
+  }
+  node.addEventListener('pointermove', move)
+  node.addEventListener('pointerup', up)
+  node.addEventListener('pointercancel', up)
+})
+
+el.videos.addEventListener('dblclick', (e) => { if (mainCellOf(e.target)) resetPictureZoom() })
+window.addEventListener('resize', applyPictureZoom)
 
 function setMain(i) {
   if (i === state.mainIdx || !state.cells[i]) return

@@ -209,6 +209,15 @@ main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 #videos .cell.main { grid-column: 1; cursor: default; }
 #videos .cell:not(.main) { grid-column: 2; }
 #videos video { width: 100%; height: 100%; object-fit: contain; display: block; }
+#videos .cell.main video { transform-origin: 0 0; }
+#videos .cell.main.zoomed { cursor: grab; }
+#videos .cell.main.panning { cursor: grabbing; }
+#zoomBadge {
+  position: absolute; right: 12px; bottom: 10px;
+  z-index: 4;
+  pointer-events: none;
+  font-size: 12px;
+}
 #videos .cell.missing video { visibility: hidden; }
 #videos .cell.missing::after {
   content: "该时段无画面";

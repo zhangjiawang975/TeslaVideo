@@ -1,7 +1,7 @@
 {
   "name": "tesla-video",
   "productName": "TeslaVideo",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "特斯拉行车记录仪视频播放与剪辑导出工具",
   "main": "src/main.js",
   "license": "MIT",
