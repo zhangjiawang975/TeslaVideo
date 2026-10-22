@@ -44,7 +44,7 @@
 ```bat
 npm install
 npm start       :: 开发运行
-npm run dist    :: 打包到 dist\TeslaVideo-<版本号>\（首次会自动下载 ffmpeg）
+npm run dist    :: 打包到 dist\TeslaVideo\ 和发布用的 zip（首次会自动下载 ffmpeg）
 ```
 
 基于 Electron + ffmpeg。车辆数据格式参考特斯拉官方 [teslamotors/dashcam](https://github.com/teslamotors/dashcam)，思路参考 [Mario34/tesla-camera](https://github.com/Mario34/tesla-camera)。

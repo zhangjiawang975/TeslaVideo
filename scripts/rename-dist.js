@@ -1,11 +1,12 @@
-// electron-builder's "dir" target always writes dist/win-unpacked; name it after the version.
+// electron-builder's "dir" target always writes dist/win-unpacked. The folder is named without
+// a version because self-updates replace its contents in place; only the zip carries the version.
 const fs = require('node:fs')
 const { execFileSync } = require('node:child_process')
 const path = require('node:path')
 const { productName, version } = require('../package.json')
 
 const dist = path.join(__dirname, '..', 'dist')
-const target = path.join(dist, `${productName}-${version}`)
+const target = path.join(dist, productName)
 fs.rmSync(target, { recursive: true, force: true })
 fs.renameSync(path.join(dist, 'win-unpacked'), target)
 console.log(`已输出 dist/${path.basename(target)}/${productName}.exe`)

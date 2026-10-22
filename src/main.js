@@ -279,9 +279,11 @@ app.whenReady().then(() => {
     minHeight: 640,
     backgroundColor: '#0f1012',
     autoHideMenuBar: true,
-    title: 'TeslaVideo',
+    title: `TeslaVideo v${app.getVersion()}`,
     webPreferences: { preload: path.join(__dirname, 'preload.js') },
   })
+  // Keep the version in the title instead of the page's <title>.
+  win.on('page-title-updated', e => e.preventDefault())
   win.loadFile(path.join(__dirname, 'index.html'))
 })
 
