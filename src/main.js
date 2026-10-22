@@ -6,6 +6,7 @@ const { spawn } = require('node:child_process')
 const { pathToFileURL } = require('node:url')
 const { readTelemetry } = require('./telemetry')
 const { probeDuration, probeKeyframes } = require('./mp4')
+const { checkForUpdate, installUpdate } = require('./updater')
 
 const CLIP_RE = /^(\d{4})-(\d{2})-(\d{2})_(\d{2})-(\d{2})-(\d{2})-([a-z_]+)\.mp4$/i
 const CAMERA_ORDER = ['front', 'back', 'left_repeater', 'right_repeater', 'left_pillar', 'right_pillar']
@@ -251,6 +252,24 @@ ipcMain.handle('cancel-export', () => {
   }
 })
 ipcMain.handle('show-item', (_, p) => shell.showItemInFolder(p))
+// Update errors are returned rather than thrown so the renderer can show them.
+ipcMain.handle('check-update', async () => {
+  if (!app.isPackaged) return null
+  try {
+    return await checkForUpdate()
+  } catch {
+    return null // offline or rate-limited: try again next launch
+  }
+})
+ipcMain.handle('install-update', async (_, info) => {
+  if (currentJob) return { ok: false, error: '正在导出，请完成后再更新' }
+  try {
+    await installUpdate(info, p => win?.webContents.send('update-progress', p))
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e.message }
+  }
+})
 
 app.whenReady().then(() => {
   win = new BrowserWindow({

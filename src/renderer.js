@@ -706,16 +706,16 @@ el.modeSel.value = store.get('exportMode') === 'copy' ? 'copy' : 'watermark'
 el.modeSel.onchange = () => store.set('exportMode', el.modeSel.value)
 
 let toastTimer = 0
-function toast(text, { cls = '', action = '', onAction = null, title = '' } = {}) {
+function toast(text, { cls = '', action = '', onAction = null, title = '', persist = false } = {}) {
   clearTimeout(toastTimer)
   el.toast.className = cls
   el.toastText.textContent = text
   el.toastText.title = title || text
   el.toastAction.hidden = !action
   el.toastAction.textContent = action
-  el.toastAction.onclick = () => { onAction(); hideToast() }
+  el.toastAction.onclick = () => { hideToast(); onAction() }
   el.toast.hidden = false
-  toastTimer = setTimeout(hideToast, cls === 'error' ? 12000 : 8000)
+  if (!persist) toastTimer = setTimeout(hideToast, cls === 'error' ? 12000 : 8000)
 }
 function hideToast() {
   clearTimeout(toastTimer)
@@ -781,3 +781,15 @@ el.exportBtn.onclick = async () => {
   if (detected && await openFolder(detected, true)) return
   showHint(last ? '上次打开的目录已不可用，请重新选择' : '插入特斯拉 U 盘，或点击上方的文件夹按钮')
 })()
+
+// ---------- self-update from GitHub releases ----------
+async function installUpdate(info) {
+  const label = `正在下载 v${info.version}`
+  toast(`${label}…`, { persist: true })
+  window.api.onUpdateProgress(p => toast(p < 1 ? `${label} ${Math.floor(p * 100)}%` : '下载完成，即将重启…', { persist: true }))
+  const r = await window.api.installUpdate(info)
+  if (!r.ok) toast('更新失败（悬停查看原因）', { cls: 'error', title: r.error || '' })
+}
+window.api.checkUpdate().then((info) => {
+  if (info) toast(`发现新版本 v${info.version}`, { action: '立即更新', onAction: () => installUpdate(info), title: info.notes, persist: true })
+})

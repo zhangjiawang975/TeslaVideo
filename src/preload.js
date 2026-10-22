@@ -11,5 +11,8 @@ contextBridge.exposeInMainWorld('api', {
   cancelExport: () => ipcRenderer.invoke('cancel-export'),
   showItem: p => ipcRenderer.invoke('show-item', p),
   pathForFile: file => webUtils.getPathForFile(file),
+  checkUpdate: () => ipcRenderer.invoke('check-update'),
+  installUpdate: info => ipcRenderer.invoke('install-update', info),
+  onUpdateProgress: cb => ipcRenderer.on('update-progress', (_, v) => cb(v)),
   onExportProgress: cb => ipcRenderer.on('export-progress', (_, v) => cb(v)),
 })

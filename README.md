@@ -6,6 +6,8 @@
 
 在 [Releases](https://github.com/zhangjiawang975/TeslaVideo/releases) 下载 zip，解压后运行 `TeslaVideo.exe`（需保留整个文件夹）。首次运行若提示“Windows 已保护你的电脑”，点 **更多信息 → 仍要运行**。
 
+程序启动时会检查 GitHub 上的新版本，有更新会在底部提示，点 **立即更新** 即可自动下载、替换并重启（v1.0.1 起支持）。
+
 插上特斯拉 U 盘会自动识别 `TeslaCam`，也可以手动选择或拖入文件夹。程序只读取视频，不会修改 U 盘内容。
 
 ## 功能
