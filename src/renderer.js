@@ -33,7 +33,7 @@ const el = {
   eventList: $('eventList'), emptyHint: $('emptyHint'),
   videos: $('videos'), topbar: $('topbar'), overlay: $('overlay'), overlayCam: $('overlayCam'), overlayTime: $('overlayTime'),
   placeholder: $('placeholder'), playBtn: $('playBtn'), timeText: $('timeText'), clockText: $('clockText'),
-  rateSel: $('rateSel'), track: $('track'), ticks: $('ticks'), dimL: $('dimL'), dimR: $('dimR'), range: $('range'),
+  rateSel: $('rateSel'), track: $('track'), scroller: $('scroller'), thumb: $('thumb'), ticks: $('ticks'), dimL: $('dimL'), dimR: $('dimR'), range: $('range'),
   handleL: $('handleL'), handleR: $('handleR'), playhead: $('playhead'), eventMark: $('eventMark'),
   setInBtn: $('setInBtn'), setOutBtn: $('setOutBtn'), resetBtn: $('resetBtn'),
   inText: $('inText'), outText: $('outText'), durText: $('durText'),
@@ -450,7 +450,27 @@ function zoom(t, factor) {
   renderAll()
 }
 
+// Slide a zoomed window so it starts at `a`, keeping its span.
+function pan(a) {
+  if (!state.view) return
+  const span = state.view.b - state.view.a
+  const na = Math.min(Math.max(0, a), total() - span)
+  state.view = { a: na, b: na + span }
+  renderTicks()
+  renderAll()
+}
+
+function renderScroller() {
+  const d = total()
+  const show = !!state.view && !!d
+  el.scroller.style.visibility = show ? 'visible' : 'hidden'
+  if (!show) return
+  el.thumb.style.left = `${(state.view.a / d) * 100}%`
+  el.thumb.style.width = `${((state.view.b - state.view.a) / d) * 100}%`
+}
+
 function renderRange() {
+  renderScroller()
   const d = total()
   const start = state.ev?.startEpoch ?? 0
   el.handleL.style.left = pct(state.in)
@@ -487,7 +507,7 @@ function renderTime() {
   }
   el.playhead.style.left = pct(t)
   el.playhead.style.visibility = inView(t) ? '' : 'hidden'
-  el.timeText.textContent = `${fmtRel(t)} / ${fmtRel(total())}${state.view ? '  ·  已放大，双击时间轴还原' : ''}`
+  el.timeText.textContent = `${fmtRel(t)} / ${fmtRel(total())}${state.view ? '  ·  已放大，拖动下方滚动条查看其他位置，双击时间轴还原' : ''}`
   el.clockText.textContent = clock
   el.overlayTime.textContent = clock
   const v = clockVideo()
@@ -545,10 +565,41 @@ function timeAt(clientX) {
   return viewA() + Math.min(Math.max(0, (clientX - r.left) / r.width), 1) * (viewB() - viewA())
 }
 
-el.track.addEventListener('wheel', (e) => {
+// Wheel zooms; Shift+wheel or a horizontal swipe pans a zoomed timeline.
+function onWheel(e) {
   e.preventDefault()
-  zoom(timeAt(e.clientX), e.deltaY > 0 ? 1.25 : 0.8)
-}, { passive: false })
+  const horizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY)
+  if (state.view && (e.shiftKey || horizontal || e.currentTarget === el.scroller)) {
+    const delta = horizontal ? e.deltaX : e.deltaY
+    pan(state.view.a + Math.sign(delta) * (state.view.b - state.view.a) * 0.2)
+  } else if (!horizontal) {
+    zoom(timeAt(e.clientX), e.deltaY > 0 ? 1.25 : 0.8)
+  }
+}
+el.track.addEventListener('wheel', onWheel, { passive: false })
+el.scroller.addEventListener('wheel', onWheel, { passive: false })
+
+// Drag the thumb to pan; pressing elsewhere on the bar centres the window there first.
+el.scroller.addEventListener('pointerdown', (e) => {
+  if (!state.view) return
+  const r = el.scroller.getBoundingClientRect()
+  const timeAtX = x => ((x - r.left) / r.width) * total()
+  const span = state.view.b - state.view.a
+  if (e.target !== el.thumb) pan(timeAtX(e.clientX) - span / 2)
+  const grab = timeAtX(e.clientX) - state.view.a
+  el.scroller.setPointerCapture(e.pointerId)
+  el.scroller.classList.add('dragging')
+  const move = ev => pan(timeAtX(ev.clientX) - grab)
+  const up = () => {
+    el.scroller.classList.remove('dragging')
+    el.scroller.removeEventListener('pointermove', move)
+    el.scroller.removeEventListener('pointerup', up)
+    el.scroller.removeEventListener('pointercancel', up)
+  }
+  el.scroller.addEventListener('pointermove', move)
+  el.scroller.addEventListener('pointerup', up)
+  el.scroller.addEventListener('pointercancel', up)
+})
 el.track.addEventListener('dblclick', () => {
   state.view = null
   renderTicks()
